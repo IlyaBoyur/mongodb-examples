@@ -2,12 +2,14 @@
 MongoDB (от _«humongous»_,  _«huge»_ (гигантский) и _«monstrous»_ (чудовищный))- это документная база данных, которая позволяет хранить и опрашивать вложенные данные, предъявляя произвольные запросы.  
 Если вы работаете в стартапе, который лелеет грандиозные планы или уже накопил столько данных, что возникла потребность в горизонтальном масштабировании, то присмотритесь к MongoDB.  
 
+
 ## Установка и подключение
 ```bash
 $ docker compose up -d --remove-orphans
 $ docker compose exec -it mongo bash -c "mongosh -u root -p example"
 > use <имя коллекции>
 ```
+
 
 ## Навигация
 `help` - показать справку  
@@ -40,8 +42,8 @@ db.towns.insertOne({
 `db.towns.find()` - просмотреть содержимое коллекции  
 В отличие от реляционных СУБД, Mongo не поддерживает соединения на стороне сервера. Один вызов JavaScript-функции извлекает документ и все вложенные в него данные. 
 
-Поле `_id` типа `ObjectId` -  занимает 12 байтов и состоит из временной метки, идентификатора клиентской машины, идентификатора клиентского процесса и 3-байтового
-инкрементируемого счетчика.
+Поле `_id` типа `ObjectId` -  занимает 12 байтов и состоит из временной метки, идентификатора клиентской машины, идентификатора клиентского процесса и 3-байтового инкрементируемого счетчика.
+
 
 #### Java Script
 
@@ -85,14 +87,20 @@ function insertCity(
 ```javascript
 > db.towns.find({ "_id" : ObjectId("658ae5321dd32f4b00991ddd") })
 ```
+
+
 #### Получить определенные поля в объекте  
 ```javascript
 > db.towns.find({ "_id" : ObjectId("658ae5321dd32f4b00991ddd") }, {name : 1})
 ```
+
+
 #### Получить все поля в объекте кроме определенных  
 ```javascript
 > db.towns.find({ "_id" : ObjectId("658ae5321dd32f4b00991ddd") }, {name : 0})
 ```
+
+
 #### Фильтрация вывода по регулярным выражениям PCRE и операторам диапазона  
 ```javascript
 > db.towns.find(
@@ -103,6 +111,7 @@ function insertCity(
 Условные операторы в Mongo  
 ```field : { $op : value }```,  
 где `$op` – операция, например `$ne` (не равно).
+
 
 #### Конструирование условия как объекта
 ```javascript
@@ -141,6 +150,7 @@ db.towns.find(
 )
 ```
 
+
 ##### Совпадение каждого из нескольких значений
 ```javascript
 db.towns.find(
@@ -149,6 +159,7 @@ db.towns.find(
 )
 ```
 
+
 ##### Несовпадение ни с одним из указанных значений
 ```javascript
 db.towns.find(
@@ -156,6 +167,7 @@ db.towns.find(
 { _id : 0, name : 1, famous_for : 1 }
 )
 ```
+
 
 ##### Фильтр по глубоко вложенным структурам
 ```javascript
@@ -170,3 +182,91 @@ db.towns.find(
 { _id : 0, name : 1, mayor : 1 }
 )
 ```
+
+
+##### Фильтр по нескольким условиям: оператор И
+Подготовка данных
+```javascript
+db.countries.insert({
+_id : "us",
+name : "United States",
+exports : {
+    foods : [{ name : "bacon", tasty : true },
+             { name : "burgers" }]
+}
+})
+db.countries.insert({
+_id : "ca",
+name : "Canada",
+exports : {
+    foods : [{ name : "bacon", tasty : false },
+             { name : "syrup", tasty : true }]
+}
+})
+db.countries.insert({
+_id : "mx",
+name : "Mexico",
+exports : {
+    foods : [{ name : "salsa",
+               tasty : true,
+               condiment : true }]
+}
+})
+```
+
+
+Фильтр выдаст все города, где экспортируется бекон и то, что эскортируется - вкусное:  
+```javascript
+db.countries.find(
+    { 'exports.foods.name' : 'bacon', 'exports.foods.tasty' : true },
+    { _id : 0, name : 1 }
+)
+```
+
+
+##### Фильтр по нескольким условиям с оператором И: $elemMatch
+Фильтр `$elemMatch` использует точное соответствие параметрам запроса
+```javascript
+db.countries.find(
+    {
+        'exports.foods' : { $elemMatch : {name : 'bacon', tasty : true} }
+    },
+    { _id : 0, name : 1 }
+)
+```
+Все страны, которые экспортируют вкусную еду, приправленную к тому же специями (condiment):
+```javascript
+db.countries.find(
+{
+'exports.foods' : {
+$elemMatch : {
+tasty : true,
+condiment : { $exists : true }
+}
+}
+},
+{ _id : 0, name : 1 }
+```
+
+
+##### Фильтр по нескольким условиям с оператором ИЛИ: $or
+Такой запрос ничего не вернет - по умолчанию подразумевается условие И:
+```javascript
+db.countries.find(
+{ _id : "mx", name : "United States" },
+{ _id : 1 }
+)
+```
+Оператор `$or` используется в префиксной нотации: `OR A B`
+```javascript
+db.countries.find(
+{
+$or : [
+{ _id : "mx" },
+{ name : "United States" }
+]
+},
+{ _id:1 }
+)
+```
+
