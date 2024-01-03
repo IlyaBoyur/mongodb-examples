@@ -112,6 +112,36 @@ function insertCity(
 ```field : { $op : value }```,  
 где `$op` – операция, например `$ne` (не равно).
 
+#### Фильтрация $regex
+```javascript
+{ <field>: { $regex: /pattern/, $options: '<options>' } }
+{ "<field>": { "$regex": "pattern", "$options": "<options>" } }
+{ <field>: { $regex: /pattern/<options> } }
+```
+##### Популярные опции
+Подготовим данные
+```javascript
+db.towns.updateOne( { _id: ObjectId("658ae56f1dd32f4b00991dde") }, { $set: { "description": "It is a big city with great recreation area.\nSmall town houses occupies the living zone.\nIt is best for healty life." } } );
+db.towns.updateOne( { _id: ObjectId("658ae5321dd32f4b00991ddd") }, { $set: { "description": "It is unknown small city.\nMysterious city." } } );
+db.towns.updateOne( { _id: ObjectId("658ab4781dd32f4b00991ddc") }, { $set: { "description": "It is a crowded huge megapolis.\nSkyscrappers are all over the city." } } );
+```
+
+Опция ```i``` позволяет выполять запросы для строк без учета регистра:
+```javascript
+db.towns.find( { "mayor.name": { $regex: /^sam/i } } )
+```
+
+Опция ```m``` позволяет находить префиксные и постфиксные строки в мультистроковых полях.
+Для шаблонов, которые включают якори (`^` для начала, `$` для конца шаблона), находит подходящую подстроку под шаблон в начале или конце каждой строки мультистрокового значения:
+```javascript
+db.towns.find({ "description": { $regex: /^M/, $options: "m" } })
+```
+Без этой опции шаблон совпадет только для начала или конца всей строки.
+
+
+Больше примеров [тут](https://www.mongodb.com/docs/manual/reference/operator/query/regex/)
+
+
 
 #### Конструирование условия как объекта
 ```javascript
