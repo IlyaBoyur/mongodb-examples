@@ -169,3 +169,30 @@ db.phones.aggregate([
     { $merge: { into: "phones.report", on: "_id", whenMatched: "replace", whenNotMatched: "insert" } }
 ])
 ```
+
+
+## Наборы реплик, сегментирование, пространственные данные и GridFS
+
+### Реплики
+Развертывание кластера
+```bash
+docker compose -f docker-compose-replicas.yml up -d --remove-orphans
+```
+
+Инициализация реплик в кластере
+```bash
+docker compose -f docker-compose-replicas.yml exec -it mongo1 mongosh --eval "rs.initiate({
+ _id: \"my-replica-set\",
+ members: [
+   {_id: 0, host: \"mongo1\"},
+   {_id: 1, host: \"mongo2\"},
+   {_id: 2, host: \"mongo3\"}
+ ]
+})"
+```
+
+Проверка реплик в кластере
+```bash
+docker compose -f docker-compose-replicas.yml  exec -it mongo1 mongosh --eval "rs.status()"
+```
+Здесь мы воспользовались новым объектом `rs` (_replica set_ – набор реплик). У него, как и любого другого объекта, имеется метод `help()`.
