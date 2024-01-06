@@ -448,6 +448,10 @@ db.countries.find( bad_bacon )
 ```javascript
 db.countries.deleteOne( bad_bacon )
 ```
+(Опция) Удалить все документы в коллекции
+```javascript
+db.countries.deleteMany( {} )
+```
 
 3) Убедиться, что осталось ожидаемое число элементов коллекции
 ```javascript
