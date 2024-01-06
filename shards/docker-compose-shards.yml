@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Сервер-реплика с шардированием
+  mongo4:
+    image: mongo
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--shardsvr", "--replSet", "shard-set"]
+    restart: always
+    ports:
+      - 27014:27018
+    depends_on:
+      - mongoconfig
+
+  # Сервер-реплика с шардированием
+  mongo5:
+    image: mongo
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--shardsvr", "--replSet", "shard-set"]
+    restart: always
+    ports:
+      - 27015:27018
+    depends_on:
+      - mongoconfig
+
+  # Реплика конфигурационного сервера
+  # (в единичном экземпляре)
+  mongoconfig:
+    image: mongo
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--configsvr", "--replSet", "shard-config-set"]
+    restart: always
+    ports:
+      - 27016:27019
+
+  # Сервер-точка входа для клиентов
+  mongos:
+    image: mongo
+    entrypoint: [ "/usr/bin/mongos", "--bind_ip_all", "--configdb", "shard-config-set/mongoconfig:27019"]
+    restart: always
+    ports:
+      - 27020:27017
+    depends_on:
+      - mongo4
+      - mongo5
