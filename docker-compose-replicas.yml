@@ -8,14 +8,12 @@ services:
     ports:
       - 27011:27017
 
-
   mongo2:
     image: mongo
     command: ["--replSet", "my-replica-set", "--bind_ip_all"]
     restart: always
     ports:
       - 27012:27017
-
 
   mongo3:
     image: mongo
